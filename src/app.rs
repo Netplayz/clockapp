@@ -138,6 +138,12 @@ impl App {
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
             }
+             KeyCode::Char('h') if self.current_tab == 0 => {
+                self.digital_clock.twenty_four_hour ^= true;
+            }
+            KeyCode::Char('s') if self.current_tab == 0 => {
+                self.digital_clock.show_seconds ^= true;
+            }
             KeyCode::Char('s') => {
                 if self.stopwatch.running {
                     self.stopwatch.stop();

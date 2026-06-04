@@ -73,6 +73,12 @@ impl DigitalClockState {
             Style::new().fg(Color::White),
         )));
 
+        lines.push(Line::from(Span::styled(
+            format!("[h] {}h | [s] seconds",
+                if self.twenty_four_hour { "24" } else { "12" }),
+            Style::new().fg(Color::DarkGray),
+        )));
+
         lines
     }
 }
