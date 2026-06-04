@@ -1,5 +1,9 @@
 # clockapp
 
+> _"An idiot admires complexity, a genius admires simplicity."_ — Terry A. Davis
+>
+> _We are not the genius in this scenario._
+
 > _Because one language wasn't sufficiently overengineered for telling time._
 
 A terminal clock with no good reason to be written in three programming languages, yet here we are.
