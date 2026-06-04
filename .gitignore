@@ -1,0 +1,11 @@
+/target
+holyc/*.o
+holyc/*.a
+holyc/solar_calc
+holyc/astronomy
+holyc/alarm_server
+holyc/date_math
+*.swp
+*.swo
+*~
+.DS_Store
