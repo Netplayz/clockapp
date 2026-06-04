@@ -1,3 +1,7 @@
+pub fn clean_bf(program: &[u8]) -> Vec<u8> {
+    program.iter().filter(|&&b| matches!(b, b'>' | b'<' | b'+' | b'-' | b'.' | b',' | b'[' | b']')).copied().collect()
+}
+
 pub fn interpret(program: &[u8], input: &[u8]) -> Vec<u8> {
     const TAPE_SIZE: usize = 30_000;
     let mut tape = vec![0u8; TAPE_SIZE];
@@ -60,8 +64,9 @@ pub fn interpret_str(program: &str, input: &[u8]) -> Vec<u8> {
 }
 
 pub fn run_bf(program: &str, input: &[u8]) -> Result<String, String> {
-    let output = interpret(program.as_bytes(), input);
-    String::from_utf8(output).map_err(|e| e.to_string())
+    let cleaned = clean_bf(program.as_bytes());
+    let output = interpret(&cleaned, input);
+    String::from_utf8(output).map_err(|e| format!("output is not valid UTF-8: {}", e))
 }
 
 pub const TICKTOCK_BF: &str = include_str!("../../bf/ticktock.bf");
@@ -154,5 +159,117 @@ mod tests {
     #[test]
     fn test_comments_ignored() {
         assert_eq!(interpret(b"+++ blah .", b""), b"\x03");
+    }
+
+    // ---- BF program integration tests ----
+
+    fn run_program(name: &str, input: &[u8]) -> Vec<u8> {
+        let code = match name {
+            "ticktock.bf" => include_str!("../../bf/ticktock.bf"),
+            "binary_clock.bf" => include_str!("../../bf/binary_clock.bf"),
+            "ascii_digits.bf" => include_str!("../../bf/ascii_digits.bf"),
+            "prime_minute.bf" => include_str!("../../bf/prime_minute.bf"),
+            _ => panic!("unknown BF program: {}", name),
+        };
+        interpret(&clean_bf(code.as_bytes()), input)
+    }
+
+    #[test]
+    fn test_ticktock_once() {
+        let out = run_program("ticktock.bf", b"1");
+        assert_eq!(out, b"tick\ntock\n");
+    }
+
+    #[test]
+    fn test_ticktock_thrice() {
+        let out = run_program("ticktock.bf", b"3");
+        assert_eq!(out, b"tick\ntock\ntick\ntock\ntick\ntock\n");
+    }
+
+    #[test]
+    fn test_ticktock_zero() {
+        let out = run_program("ticktock.bf", b"0");
+        assert_eq!(out, b"");
+    }
+
+    #[test]
+    fn test_binary_clock() {
+        let out = run_program("binary_clock.bf", b"\x03\x05\x02");
+        assert_eq!(out, b"...\n.....\n..\n");
+    }
+
+    #[test]
+    fn test_binary_clock_zero() {
+        let out = run_program("binary_clock.bf", b"\x00\x00\x00");
+        assert_eq!(out, b"\n\n\n");
+    }
+
+    #[test]
+    fn test_ascii_digits_five() {
+        let out = run_program("ascii_digits.bf", b"5");
+        assert_eq!(out, b"@@@@@\n");
+    }
+
+    #[test]
+    fn test_ascii_digits_zero() {
+        let out = run_program("ascii_digits.bf", b"0");
+        assert_eq!(out, b"\n");
+    }
+
+    #[test]
+    fn test_prime_minute_2() {
+        let out = run_program("prime_minute.bf", b"\x02");
+        assert_eq!(out, b"Y");
+    }
+
+    #[test]
+    fn test_prime_minute_4() {
+        let out = run_program("prime_minute.bf", b"\x04");
+        assert_eq!(out, b"N");
+    }
+
+    #[test]
+    fn test_prime_minute_0() {
+        let out = run_program("prime_minute.bf", b"\x00");
+        assert_eq!(out, b"N");
+    }
+
+    #[test]
+    fn test_prime_minute_1() {
+        let out = run_program("prime_minute.bf", b"\x01");
+        assert_eq!(out, b"N");
+    }
+
+    #[test]
+    fn test_prime_minute_59() {
+        let out = run_program("prime_minute.bf", b"\x3B");
+        assert_eq!(out, b"Y");
+    }
+
+    #[test]
+    fn test_prime_minute_53() {
+        let out = run_program("prime_minute.bf", b"\x35");
+        assert_eq!(out, b"Y");
+    }
+
+    #[test]
+    fn test_prime_minute_all_primes() {
+        let primes: [u8; 17] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59];
+        for p in primes {
+            let out = run_program("prime_minute.bf", &[p]);
+            assert_eq!(out, b"Y", "expected Y for prime {}", p);
+        }
+    }
+
+    #[test]
+    fn test_prime_minute_all_nonprimes() {
+        for n in 0u8..=59 {
+            let is_prime = matches!(n, 2 | 3 | 5 | 7 | 11 | 13 | 17 | 19 | 23 | 29 | 31 | 37 | 41 | 43 | 47 | 53 | 59);
+            assert_eq!(
+                run_program("prime_minute.bf", &[n]),
+                if is_prime { b"Y" } else { b"N" },
+                "mismatch for n={}", n
+            );
+        }
     }
 }
