@@ -2,7 +2,7 @@
 
 > _"An idiot admires complexity, a genius admires simplicity."_ — Terry A. Davis
 >
-> _We are not the genius in this scenario._
+> _Well Terry, we not the geniuses in this scenario._
 
 > _Because one language wasn't sufficiently overengineered for telling time._
 
